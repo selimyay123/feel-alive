@@ -39,7 +39,7 @@ export default function Home() {
 
       {task && (
         <div className="mt-18 flex justify-center items-center w-[50%] mx-auto max-md:w-full text-xl italic p-4 bg-black border-2 border-white rounded-full text-center">
-          &quot;{task}&quot;
+          {task}
         </div>
       )}
     </div>
