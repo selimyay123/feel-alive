@@ -1,26 +1,43 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+body {
+  color: white;
+  padding: 16px 8px;
+  font-family: 'Poppins', sans-serif;
+  background-image: url('/mountain.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.text-gradient {
+  background: linear-gradient(to right, #8e44ad, #2980b9, #16a085, #f39c12);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.hover-gradient:hover {
+  /* background: linear-gradient(to right, #8e44ad, #2980b9, #16a085, #f39c12);*/
+  background: linear-gradient(to right, #f39c12, #16a085, #2980b9, #8e44ad);
+}
+
+.hover-gradient {
+  transition: background 0.4s ease;
+  background: linear-gradient(to right, #8e44ad, #2980b9, #16a085, #f39c12);
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-slide-in-left {
+  animation: slideInFromLeft 2s ease-out forwards;
 }
