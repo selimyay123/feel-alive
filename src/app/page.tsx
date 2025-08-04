@@ -21,7 +21,7 @@ export default function Home() {
       <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">Break the cycle, now. Feel Alive.</h1>
       {!loading && !task && (
         <button className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-18 hover-gradient" onClick={handleClick}>
-          Take Action, tell your brain that you're alive.
+          Take Action, tell your brain that you are alive.
         </button>
       )}
       {loading && (
