@@ -7,7 +7,7 @@ function Navbar() {
             <Link href="/" className=" italic text-xl">
                 <Image src={"/feel-alive-logo.png"} alt={"app logo"} width={100} height={100} className="rounded-xl" />
             </Link>
-            <div className="flex max-md:flex-col gap-4">
+            <div className="flex gap-4">
                 <Link href="/">Home</Link>
                 <Link href="/about">About</Link>
                 <Link href="/contact">Contact</Link>
