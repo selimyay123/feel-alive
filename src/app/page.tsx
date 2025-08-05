@@ -17,7 +17,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex flex-col items-start mt-12">
+    <div className="h-screen flex flex-col items-start mt-4">
       <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">
         Break the cycle, now. Feel Alive.
       </h1>
@@ -27,7 +27,7 @@ export default function Home() {
           className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-18 hover-gradient"
           onClick={handleClick}
         >
-          Take Action, tell your brain that you&apos;re alive.
+          Take Action, tell your brain that you are alive.
         </button>
       )}
 
@@ -38,7 +38,7 @@ export default function Home() {
       )}
 
       {task && (
-        <div className="mt-18 flex justify-center items-center w-[50%] mx-auto max-md:w-full text-xl italic p-4 bg-black border-2 border-white rounded-full text-center">
+        <div className="mt-18 flex justify-center items-center w-[50%] mx-auto max-md:w-full text-xl italic p-4 backdrop-blur-3xl border-2 border-white rounded-full text-center">
           &quot;{task}&quot;
         </div>
       )}
