@@ -21,6 +21,7 @@ export default function Home() {
       <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">
         Break the cycle, now. Feel Alive.
       </h1>
+      <p>test</p>
 
       {!loading && !task && (
         <button
