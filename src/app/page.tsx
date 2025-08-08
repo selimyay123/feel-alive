@@ -18,13 +18,10 @@ export default function Home() {
 
   return (
     <div className="h-screen flex flex-col items-start mt-4">
-      {/* 
+
       <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">
         Break the cycle, now. Feel Alive.
       </h1>
-      */}
-
-      <p>test</p>
 
       {!loading && !task && (
         <button
