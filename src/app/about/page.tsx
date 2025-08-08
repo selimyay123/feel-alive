@@ -3,7 +3,7 @@ import Image from "next/image"
 function About() {
     return (
         <div className="space-y-8">
-            <h1 className="text-7xl mt-4">What's the vision?</h1>
+            <h1 className="text-7xl mt-4">What is the vision?</h1>
             <div className="flex max-md:flex-col items-center gap-4">
                 <Image src={"/hero.png"} alt={"hero"} width={300} height={300} className="rounded-lg max-md:w-full" />
                 <div className="space-y-4 border border-white/15 backdrop-blur-lg rounded-lg p-4">
