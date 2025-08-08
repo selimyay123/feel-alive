@@ -73,7 +73,7 @@ function Login() {
 
                 <button
                     onClick={handleSubmit}
-                    className="bg-white/50 text-black rounded-lg px-4 py-3 mt-2"
+                    className="bg-white/80 text-black rounded-lg px-4 py-3 mt-2"
                 >
                     {signupClicked ? "Sign Up" : "Login"}
                 </button>
