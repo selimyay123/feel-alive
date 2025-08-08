@@ -4,6 +4,9 @@ body {
   color: white;
   padding: 16px 8px;
   font-family: 'Poppins', sans-serif;
+  /* 
+  
+  */
   background-image: url('/mountain.jpg');
   background-size: cover;
   background-position: center;
