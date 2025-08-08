@@ -18,7 +18,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex flex-col items-start mt-4">
+    <div className="h-screen flex flex-col items-start mt-4 max-md:mt-0">
 
       <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">
         Break the cycle, now. Feel Alive.
