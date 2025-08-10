@@ -27,7 +27,7 @@ export default function Home() {
         {t('slogan')}
       </h1>
 
-      <div className="relative w-full min-h-[300px] mt-12 rounded-lg overflow-visible">
+      <div className="relative w-full min-h-[350px] mt-12 rounded-lg overflow-visible">
         <Image
           src="/blue.jpg"
           alt="blue"

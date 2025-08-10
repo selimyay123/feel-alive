@@ -6,7 +6,7 @@ function About() {
     const { t } = useI18n();
     return (
         <div className="space-y-8">
-            <h1 className="text-7xl max-md:text-5xl mt-4">
+            <h1 className="text-7xl max-md:text-5xl mt-4 text-gradient animate-slide-in-left">
                 {t('ourVision')}
             </h1>
             <div className="flex max-md:flex-col items-center gap-4">
