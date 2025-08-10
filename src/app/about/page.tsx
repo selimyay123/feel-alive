@@ -6,12 +6,12 @@ function About() {
     const { t } = useI18n();
     return (
         <div className="space-y-8">
-            <h1 className="text-7xl mt-4">
+            <h1 className="text-7xl max-md:text-5xl mt-4">
                 {t('ourVision')}
             </h1>
             <div className="flex max-md:flex-col items-center gap-4">
                 <Image src={"/hero.png"} alt={"hero"} width={300} height={300} className="rounded-lg max-md:w-full" />
-                <div className="space-y-4 border border-white/15 backdrop-blur-lg rounded-lg p-4">
+                <div className="space-y-4 border border-white/10 backdrop-blur-lg rounded-lg p-4">
                     <p className="font-semibold text-xl">
                         {t('areYouTired')}
                     </p>
