@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import MobileNavbar from "@/components/MobileNavbar";
 import { I18nProvider } from "@/context/I18nContext";
+import AuthProvider from "@/components/AuthProvider";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -34,7 +35,7 @@ export default function RootLayout({
           <div className="block md:hidden">
             <MobileNavbar />
           </div>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </I18nProvider>
 
 
