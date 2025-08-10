@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/context/I18nContext";
 import { useState } from "react";
 
 function Contact() {
@@ -30,6 +31,8 @@ function Contact() {
         }
     };
 
+    const { t } = useI18n();
+
     return (
         <form
             onSubmit={handleSubmit}
@@ -39,7 +42,7 @@ function Contact() {
                 required
                 type="text"
                 name="name"
-                placeholder="Name*"
+                placeholder={t('name')}
                 value={form.name}
                 onChange={handleChange}
                 className="border border-white px-4 py-3 rounded-lg w-full"
@@ -48,7 +51,7 @@ function Contact() {
                 required
                 type="text"
                 name="lastName"
-                placeholder="Last Name*"
+                placeholder={t('lastName')}
                 value={form.lastName}
                 onChange={handleChange}
                 className="border border-white px-4 py-3 rounded-lg w-full"
@@ -57,7 +60,7 @@ function Contact() {
                 required
                 type="email"
                 name="email"
-                placeholder="Email*"
+                placeholder={t('email')}
                 value={form.email}
                 onChange={handleChange}
                 className="border border-white px-4 py-3 rounded-lg w-full"
@@ -65,13 +68,13 @@ function Contact() {
             <textarea
                 required
                 name="message"
-                placeholder="Write your message here...*"
+                placeholder={t('enterYourMessageHere')}
                 value={form.message}
                 onChange={handleChange}
                 className="border w-full border-white px-4 py-3 rounded-lg min-h-[200px]"
             />
             <button type="submit" className="w-full bg-white/80 text-black rounded-lg px-4 py-3 mt-2">
-                Submit
+                {t('send')}
             </button>
         </form>
     );

@@ -4,6 +4,7 @@ import { Poppins } from 'next/font/google'
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import MobileNavbar from "@/components/MobileNavbar";
+import { I18nProvider } from "@/context/I18nContext";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -25,14 +26,18 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body className="max-w-[1000px] mx-auto bg-gray-200">
-        <div className="hidden md:block">
-          <Navbar />
-        </div>
-        <div className="block md:hidden">
-          <MobileNavbar />
-        </div>
 
-        {children}
+        <I18nProvider>
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
+          <div className="block md:hidden">
+            <MobileNavbar />
+          </div>
+          {children}
+        </I18nProvider>
+
+
       </body>
     </html>
   );

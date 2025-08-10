@@ -3,6 +3,7 @@ import Image from "next/image"
 import { useState } from "react"
 import { tasks } from "./data/tasks"
 import { ClipLoader } from "react-spinners"
+import { useI18n } from "@/context/I18nContext"
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -17,11 +18,13 @@ export default function Home() {
     }, 5000);
   }
 
+  const { t } = useI18n();
+
   return (
     <div className="h-screen flex flex-col items-start mt-4 max-md:mt-0">
 
-      <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left">
-        Break the cycle, now. Feel Alive.
+      <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left leading-24">
+        {t('slogan')}
       </h1>
 
       <div className="relative w-full h-[50%] mt-8 rounded-lg overflow-hidden">
@@ -36,11 +39,11 @@ export default function Home() {
 
           <div className="flex max-md:flex-col items-center justify-evenly max-md:gap-8">
             <h1 className="text-white text-2xl  text-center px-4 underline">
-              One step forward is greater than no step at all.
+              {t('subSlogan1')}
             </h1>
             <div className="w-px font-bold h-25 bg-white mx-8 max-md:hidden"></div>
             <h1 className="text-white text-2xl text-center px-4 underline">
-              Take action, tell your brain that you are alive.
+              {t('subSlogan2')}
             </h1>
           </div>
 
@@ -49,7 +52,7 @@ export default function Home() {
               className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-18 hover-gradient"
               onClick={handleClick}
             >
-              Start
+              {t('start')}
             </button>
           )}
           {loading && (
@@ -65,10 +68,6 @@ export default function Home() {
           )}
         </div>
       </div>
-
-
-
-
     </div>
   );
 }
