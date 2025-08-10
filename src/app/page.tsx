@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-start mt-4 max-md:mt-0 min-h-screen">
 
-      <h1 className="text-7xl font-semibold text-gradient animate-slide-in-left md:leading-[1.3]">
+      <h1 className="text-7xl max-w-fit font-semibold text-gradient animate-slide-in-left md:leading-[1.3]">
         {t('slogan')}
       </h1>
 
