@@ -3,7 +3,7 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
-import { supabase, } from "../../lib/supabaseClient"; // Session tipini Supabase'den almak mümkünse
+import { supabase, } from "../../lib/supabaseClient";
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -12,7 +12,7 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [session, setSession] = useState<Session | null>(null); // Supabase tipi kullanıldı
+    const [session, setSession] = useState<Session | null>(null);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -27,7 +27,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
             setSession(data?.session ?? null);
             setLoading(false);
 
-            // Eğer oturum varsa ana sayfaya yönlendir
             if (data?.session) {
                 router.replace("/");
             }
@@ -38,7 +37,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
 
-            // Oturum açılmışsa ana sayfaya, değilse login sayfasına yönlendir
             if (session) {
                 router.replace("/");
             } else {
