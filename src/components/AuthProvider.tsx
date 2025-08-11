@@ -40,7 +40,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
             if (session) {
                 router.replace("/");
             } else {
-                router.replace("/login");
+                router.replace("/");
             }
         });
 
