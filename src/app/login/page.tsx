@@ -5,12 +5,9 @@ import { supabase } from "../../../lib/supabaseClient";
 
 export default function Login() {
     const handleGoogleLogin = async () => {
-        const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`;
-
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
-                redirectTo: redirectUrl,
                 queryParams: {
                     prompt: "select_account",
                 },
