@@ -92,7 +92,6 @@ function Navbar() {
     };
 
     if (!isMounted) {
-        // Server-render ve client mount olmadan gösterilen statik içerik
         return (
             <div>
                 <div className="flex items-center gap-4 w-full justify-end pr-8">

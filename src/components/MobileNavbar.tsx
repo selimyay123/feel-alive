@@ -17,6 +17,7 @@ function MobileNavbar() {
 
     return (
         <div className="w-full flex-col items-center justify-center">
+
             <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-4 w-full pl-4">
                     <span className="fi fi-tr" onClick={() => setLocale('tr')}></span>
