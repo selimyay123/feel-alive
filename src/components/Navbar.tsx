@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Info, LogOut, Mail } from "lucide-react";
 import { useI18n } from "@/context/I18nContext";
+import { ClipLoader } from "react-spinners";
 
 function Navbar() {
     const pathname = usePathname();
@@ -109,7 +110,6 @@ function Navbar() {
                         />
                     </Link>
                     <div className="flex max-md:flex-col gap-4 max-md:gap-2 rounded-full text-black bg-white/15 backdrop-blur-lg py-4 px-6 max-md:py-2 max-md:px-3 items-center">
-                        {/* Server tarafında user verisi yok, boş bırak */}
                     </div>
                 </div>
             </div>
@@ -148,33 +148,34 @@ function Navbar() {
                     })}
 
                     {user === undefined ? (
-                        <span className="text-white">Loading user...</span>
-                    ) : user ? (
-                        <div className="flex items-center gap-2 ml-2 bg-white/30 p-4 rounded-full">
-                            {user.avatar_url ? (
-                                <Image
-                                    src={user.avatar_url}
-                                    alt="Profile photo"
-                                    width={30}
-                                    height={30}
-                                    className="rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-black font-bold text-sm">
-                                    {user.full_name
-                                        ? user.full_name.charAt(0).toUpperCase()
-                                        : user.email.charAt(0).toUpperCase()}
-                                </div>
-                            )}
-                            <button
-                                onClick={handleLogout}
-                                aria-label="Logout"
-                                className="text-white hover:text-red-600 transition p-1 rounded"
-                            >
-                                <LogOut size={30} />
-                            </button>
-                        </div>
-                    ) : (
+                        <div className="flex items-center justify-center p-3">
+                            <ClipLoader color="#fff" size={20} />
+                        </div>) : user ? (
+                            <div className="flex items-center gap-2 ml-2 bg-white/30 p-4 rounded-full">
+                                {user.avatar_url ? (
+                                    <Image
+                                        src={user.avatar_url}
+                                        alt="Profile photo"
+                                        width={30}
+                                        height={30}
+                                        className="rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-black font-bold text-sm">
+                                        {user.full_name
+                                            ? user.full_name.charAt(0).toUpperCase()
+                                            : user.email.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handleLogout}
+                                    aria-label="Logout"
+                                    className="text-white hover:text-red-600 transition p-1 rounded"
+                                >
+                                    <LogOut size={30} />
+                                </button>
+                            </div>
+                        ) : (
                         <Link href="/login" className="underline text-white">
                             <span className="text-lg font-semibold">Login</span>
                         </Link>
