@@ -82,7 +82,7 @@ export default function Home() {
     fetchUserAndTask();
   }, []);
 
-  // NEW: listen for sign-outs and clear state
+  // Clear state on sign-out
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -163,9 +163,7 @@ export default function Home() {
       } else {
         try {
           msg = JSON.stringify(e);
-        } catch {
-          // noop
-        }
+        } catch { }
       }
       console.error("Task assignment error:", msg);
       setLoading(false);
@@ -178,16 +176,19 @@ export default function Home() {
         {t("slogan")}
       </h1>
 
-      <div className="relative w-full min-h-[350px] mt-12 rounded-lg overflow-visible">
+      {/* Fixed-height hero so layout doesn't jump */}
+      <div className="relative w-full h-[420px] md:h-[520px] mt-12 rounded-lg overflow-hidden">
         <Image
           src="/blue.jpg"
           alt="blue"
           fill
           className="object-cover rounded-xl opacity-30"
+          priority
         />
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center w-[70%] max-md:w-full mx-auto">
-          <div className="flex max-md:flex-col items-center justify-evenly max-md:gap-8">
+        <div className="absolute inset-0 flex flex-col items-center justify-center w-[70%] max-md:w-full mx-auto px-4">
+          {/* Slogans */}
+          <div className="flex max-md:flex-col items-center justify-evenly gap-6 md:gap-0">
             <h1 className="text-white text-2xl text-center px-4 underline">
               {t("subSlogan1")}
             </h1>
@@ -197,31 +198,41 @@ export default function Home() {
             </h1>
           </div>
 
-          {!loading && !task && (
-            <button
-              className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-8 hover-gradient"
-              onClick={handleClick}
+          {/* Unified wrapper keeps height stable; only shows chrome when task exists */}
+          <div className="mt-8 w-full max-w-2xl">
+            <div
+              className={[
+                "rounded-2xl p-4 md:p-6 min-h-[140px] max-h-[200px] overflow-auto flex items-center justify-center text-center transition-all",
+                task
+                  ? "border-2 border-white/70 bg-white/10 backdrop-blur-3xl"
+                  : "border-0 bg-transparent backdrop-blur-0"
+              ].join(" ")}
             >
-              {t("start")}
-            </button>
-          )}
-
-          {loading && (
-            <div className="mt-16 flex justify-center items-center w-full">
-              <ClipLoader color="#8e44ad" size={50} />
-            </div>
-          )}
-
-          {task && (
-            <div className="mt-16 flex flex-col items-center justify-center w-[70%] mx-auto max-md:w-full text-xl italic p-4 backdrop-blur-3xl border-2 border-white rounded-2xl text-center space-y-4">
-              <p>&quot;{task}&quot;</p>
-              {timeLeft && (
-                <p className="text-sm text-gray-200">
-                  New task available in <span className="font-bold">{timeLeft}</span>
+              {loading ? (
+                <div className="flex justify-center items-center w-full">
+                  <ClipLoader color="#8e44ad" size={50} />
+                </div>
+              ) : !task ? (
+                <button
+                  className="rounded-full w-[60%] max-md:w-full mx-auto py-3 px-4 hover-gradient"
+                  onClick={handleClick}
+                >
+                  {t("start")}
+                </button>
+              ) : (
+                <p className="text-white text-xl italic">
+                  &quot;{task}&quot;
                 </p>
               )}
             </div>
-          )}
+
+            {/* Countdown below the panel (only when task exists) */}
+            {task && timeLeft && (
+              <p className="mt-3 text-center text-sm text-gray-200">
+                New task available in <span className="font-bold">{timeLeft}</span>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
