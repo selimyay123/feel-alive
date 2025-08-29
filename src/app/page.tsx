@@ -202,7 +202,7 @@ export default function Home() {
           <div className="mt-8 w-full max-w-2xl">
             <div
               className={[
-                "rounded-2xl p-4 md:p-6 min-h-[140px] max-h-[200px] overflow-auto flex items-center justify-center text-center transition-all",
+                "rounded-2xl py-8 px-4 md:p-6 min-h-[140px] max-h-[200px] overflow-auto flex items-center justify-center text-center transition-all",
                 task
                   ? "border-2 border-white/70 bg-white/10 backdrop-blur-3xl"
                   : "border-0 bg-transparent backdrop-blur-0"
