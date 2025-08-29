@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { tasks } from "./data/tasks";
 import { ClipLoader } from "react-spinners";
 import { useI18n } from "@/context/I18nContext";
@@ -10,49 +11,152 @@ import { supabase } from "../../lib/supabaseClient";
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [task, setTask] = useState<string | null>(null);
-  const [, setUserName] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>(""); // countdown
+  const [user, setUser] = useState<any>(null);
 
   const { t } = useI18n();
+  const router = useRouter();
 
+  // Format countdown
+  function formatTimeLeft(ms: number) {
+    const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  // Update countdown every second
   useEffect(() => {
-    const fetchUser = async () => {
+    if (!expiresAt) return;
+
+    const interval = setInterval(() => {
+      const msLeft = expiresAt.getTime() - new Date().getTime();
+      if (msLeft <= 0) {
+        setTask(null);
+        setExpiresAt(null);
+        setTimeLeft("");
+        clearInterval(interval);
+      } else {
+        setTimeLeft(formatTimeLeft(msLeft));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  // Fetch user and existing task on component mount
+  useEffect(() => {
+    const fetchUserAndTask = async () => {
       const { data, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Session alınamadı:", error.message);
-        setUserName(null);
-      } else if (data?.session?.user) {
-        const user = data.session.user;
-        const name = user.user_metadata.full_name || user.email || "User";
-        setUserName(name);
+      if (!error && data?.session?.user) {
+        setUser(data.session.user);
+
+        // 🔑 Check if today's task exists
+        const today = new Date().toISOString().split("T")[0];
+        const { data: existingTask } = await supabase
+          .from("user_tasks")
+          .select("task, created_at")
+          .eq("user_id", data.session.user.id)
+          .eq("assigned_date", today)
+          .single();
+
+        if (existingTask) {
+          setTask(existingTask.task);
+
+          // set expiration = created_at + 24h
+          const expiry = new Date(existingTask.created_at);
+          expiry.setHours(expiry.getHours() + 24);
+          setExpiresAt(expiry);
+        }
       } else {
-        setUserName(null);
+        setUser(null);
       }
     };
 
-    fetchUser();
+    fetchUserAndTask();
+  }, []);
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const name = session.user.user_metadata.full_name || session.user.email || "User";
-        setUserName(name);
-      } else {
-        setUserName(null);
+  // NEW: Clear task state on sign-out
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setTask(null);
+        setExpiresAt(null);
+        setTimeLeft("");
+        setUser(null);
       }
     });
-
     return () => {
       listener.subscription.unsubscribe();
     };
   }, []);
 
-  function handleClick() {
+  async function handleClick() {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      const task = tasks[Math.floor(Math.random() * tasks.length)].task;
-      setTask(task);
+
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+      // Check if already has a task today
+      const { data: existingTask, error: fetchError } = await supabase
+        .from("user_tasks")
+        .select("task, created_at")
+        .eq("user_id", user.id)
+        .eq("assigned_date", today)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        throw fetchError;
+      }
+
+      if (existingTask) {
+        setTask(existingTask.task);
+        const expiry = new Date(existingTask.created_at);
+        expiry.setHours(expiry.getHours() + 24);
+        setExpiresAt(expiry);
+        setLoading(false);
+        return;
+      }
+
+      // Pick a new random task
+      const newTask = tasks[Math.floor(Math.random() * tasks.length)].task;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("user_tasks")
+        .insert([
+          {
+            user_id: user.id,
+            task: newTask,
+            assigned_date: today,
+          },
+        ])
+        .select("created_at")
+        .single();
+
+      if (insertError) throw insertError;
+
+      setTask(newTask);
+
+      // set expiration = created_at + 24h
+      const expiry = new Date(inserted.created_at);
+      expiry.setHours(expiry.getHours() + 24);
+      setExpiresAt(expiry);
+
       setLoading(false);
-    }, 5000);
+    } catch (err: any) {
+      console.error("Task assignment error:", err.message);
+      setLoading(false);
+    }
   }
 
   return (
@@ -80,6 +184,7 @@ export default function Home() {
             </h1>
           </div>
 
+          {/* Show start button only if no task yet */}
           {!loading && !task && (
             <button
               className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-8 hover-gradient"
@@ -88,6 +193,7 @@ export default function Home() {
               {t("start")}
             </button>
           )}
+
           {loading && (
             <div className="mt-16 flex justify-center items-center w-full">
               <ClipLoader color="#8e44ad" size={50} />
@@ -95,8 +201,13 @@ export default function Home() {
           )}
 
           {task && (
-            <div className="mt-16 flex justify-center items-center w-[50%] mx-auto max-md:w-full text-xl italic p-4 backdrop-blur-3xl border-2 border-white rounded-full text-center">
-              &quot;{task}&quot;
+            <div className="mt-16 flex flex-col items-center justify-center w-[70%] mx-auto max-md:w-full text-xl italic p-4 backdrop-blur-3xl border-2 border-white rounded-2xl text-center space-y-4">
+              <p>&quot;{task}&quot;</p>
+              {timeLeft && (
+                <p className="text-sm text-gray-200">
+                  New task available in <span className="font-bold">{timeLeft}</span>
+                </p>
+              )}
             </div>
           )}
         </div>
