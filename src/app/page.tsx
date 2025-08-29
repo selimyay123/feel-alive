@@ -7,18 +7,23 @@ import { tasks } from "./data/tasks";
 import { ClipLoader } from "react-spinners";
 import { useI18n } from "@/context/I18nContext";
 import { supabase } from "../../lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
+
+type UserTaskRow = {
+  task: string;
+  created_at: string; // ISO string from Supabase
+};
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [task, setTask] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-  const [timeLeft, setTimeLeft] = useState<string>(""); // countdown
-  const [user, setUser] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [user, setUser] = useState<User | null>(null);
 
   const { t } = useI18n();
   const router = useRouter();
 
-  // Format countdown
   function formatTimeLeft(ms: number) {
     const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
     const hours = Math.floor(totalSeconds / 3600);
@@ -29,12 +34,11 @@ export default function Home() {
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  // Update countdown every second
   useEffect(() => {
     if (!expiresAt) return;
 
     const interval = setInterval(() => {
-      const msLeft = expiresAt.getTime() - new Date().getTime();
+      const msLeft = expiresAt.getTime() - Date.now();
       if (msLeft <= 0) {
         setTask(null);
         setExpiresAt(null);
@@ -48,7 +52,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  // Fetch user and existing task on component mount
+  // On mount: fetch session and today's task
   useEffect(() => {
     const fetchUserAndTask = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -56,19 +60,16 @@ export default function Home() {
       if (!error && data?.session?.user) {
         setUser(data.session.user);
 
-        // 🔑 Check if today's task exists
         const today = new Date().toISOString().split("T")[0];
         const { data: existingTask } = await supabase
           .from("user_tasks")
           .select("task, created_at")
           .eq("user_id", data.session.user.id)
           .eq("assigned_date", today)
-          .single();
+          .single<UserTaskRow>();
 
         if (existingTask) {
           setTask(existingTask.task);
-
-          // set expiration = created_at + 24h
           const expiry = new Date(existingTask.created_at);
           expiry.setHours(expiry.getHours() + 24);
           setExpiresAt(expiry);
@@ -81,7 +82,7 @@ export default function Home() {
     fetchUserAndTask();
   }, []);
 
-  // NEW: Clear task state on sign-out
+  // NEW: listen for sign-outs and clear state
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -91,6 +92,7 @@ export default function Home() {
         setUser(null);
       }
     });
+
     return () => {
       listener.subscription.unsubscribe();
     };
@@ -107,15 +109,15 @@ export default function Home() {
     const today = new Date().toISOString().split("T")[0];
 
     try {
-      // Check if already has a task today
       const { data: existingTask, error: fetchError } = await supabase
         .from("user_tasks")
         .select("task, created_at")
         .eq("user_id", user.id)
         .eq("assigned_date", today)
-        .single();
+        .single<UserTaskRow>();
 
-      if (fetchError && fetchError.code !== "PGRST116") {
+      // PGRST116 = no rows
+      if (fetchError && (fetchError as { code?: string }).code !== "PGRST116") {
         throw fetchError;
       }
 
@@ -141,20 +143,21 @@ export default function Home() {
           },
         ])
         .select("created_at")
-        .single();
+        .single<{ created_at: string }>();
 
       if (insertError) throw insertError;
 
       setTask(newTask);
 
-      // set expiration = created_at + 24h
       const expiry = new Date(inserted.created_at);
       expiry.setHours(expiry.getHours() + 24);
       setExpiresAt(expiry);
 
       setLoading(false);
-    } catch (err: any) {
-      console.error("Task assignment error:", err.message);
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "message" in e ? String((e as any).message) : "Unknown error";
+      console.error("Task assignment error:", msg);
       setLoading(false);
     }
   }
@@ -184,7 +187,6 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* Show start button only if no task yet */}
           {!loading && !task && (
             <button
               className="rounded-full w-[50%] max-md:w-full mx-auto p-4 mt-8 hover-gradient"
