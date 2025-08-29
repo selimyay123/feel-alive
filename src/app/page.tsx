@@ -155,8 +155,18 @@ export default function Home() {
 
       setLoading(false);
     } catch (e: unknown) {
-      const msg =
-        e && typeof e === "object" && "message" in e ? String((e as any).message) : "Unknown error";
+      let msg = "Unknown error";
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (typeof e === "string") {
+        msg = e;
+      } else {
+        try {
+          msg = JSON.stringify(e);
+        } catch {
+          // noop
+        }
+      }
       console.error("Task assignment error:", msg);
       setLoading(false);
     }
