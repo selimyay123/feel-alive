@@ -177,7 +177,7 @@ export default function Home() {
       </h1>
 
       {/* Fixed-height hero so layout doesn't jump */}
-      <div className="relative w-full h-[420px] md:h-[520px] mt-12 rounded-lg overflow-hidden py-4">
+      <div className="relative w-full h-[420px] md:h-[520px] mt-12 rounded-lg overflow-hidden">
         <Image
           src="/blue.jpg"
           alt="blue"
@@ -186,7 +186,8 @@ export default function Home() {
           priority
         />
 
-        <div className="absolute inset-0 flex flex-col items-center justify-center w-[70%] max-md:w-full mx-auto px-4">
+        + <div className="absolute inset-0 flex flex-col items-center justify-center w-[70%] max-md:w-full mx-auto px-4 pt-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
+
           {/* Slogans */}
           <div className="flex max-md:flex-col items-center justify-evenly gap-6 md:gap-0">
             <h1 className="text-white text-2xl text-center px-4 underline">
