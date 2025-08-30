@@ -177,7 +177,7 @@ export default function Home() {
       </h1>
 
       {/* Fixed-height hero so layout doesn't jump */}
-      <div className="relative w-full h-[420px] md:h-[520px] mt-12 rounded-lg overflow-hidden">
+      <div className="relative w-full h-[420px] md:h-[520px] mt-12 rounded-lg overflow-hidden py-4">
         <Image
           src="/blue.jpg"
           alt="blue"
