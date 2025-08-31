@@ -177,7 +177,7 @@ function Navbar() {
                             </div>
                         ) : (
                         <Link href="/login" className="underline text-white">
-                            <span className="text-lg font-semibold">Login</span>
+                            <span className="text-lg font-semibold">{t('login')}</span>
                         </Link>
                     )}
                 </div>

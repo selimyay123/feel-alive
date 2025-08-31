@@ -14,5 +14,8 @@
     "lastName": "Soyisim*",
     "email": "Email*",
     "enterYourMessageHere": "Mesajınızı buraya girebilirsiniz...*",
-    "send": "Gönder"
+    "send": "Gönder",
+    "loginMessage": "Merhaba! Şu an için yalnızca Google ile giriş yapabilirsiniz.",
+    "signInWithGoogle": "Google ile Giriş Yap",
+    "login": "Giriş"
 }

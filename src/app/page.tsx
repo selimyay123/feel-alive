@@ -11,7 +11,7 @@ import type { User } from "@supabase/supabase-js";
 
 type UserTaskRow = {
   task: string;
-  created_at: string; // ISO string from Supabase
+  created_at: string;
 };
 
 export default function Home() {
@@ -82,7 +82,6 @@ export default function Home() {
     fetchUserAndTask();
   }, []);
 
-  // Clear state on sign-out
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
@@ -176,7 +175,6 @@ export default function Home() {
         {t("slogan")}
       </h1>
 
-      {/* Fixed-height hero so layout doesn't jump */}
       <div className="relative w-full h-[460px] md:h-[520px] mt-12 rounded-lg overflow-hidden">
         <Image
           src="/blue.jpg"
@@ -198,7 +196,6 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* Unified wrapper keeps height stable; only shows chrome when task exists */}
           <div className="mt-8 w-full max-w-2xl">
             <div
               className={[
@@ -226,7 +223,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Countdown below the panel (only when task exists) */}
             {task && timeLeft && (
               <p className="mt-3 text-center text-sm text-gray-200">
                 New task available in <span className="font-bold">{timeLeft}</span>

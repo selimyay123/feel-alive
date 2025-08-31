@@ -14,5 +14,8 @@
     "lastName": "Last Name*",
     "email": "Email*",
     "enterYourMessageHere": "Enter your message here...*",
-    "send": "Send"
+    "send": "Send",
+    "loginMessage": "Hi! Right now you can only sign in with Google.",
+    "signInWithGoogle": "Sign In With Google",
+    "login": "Login"
 }

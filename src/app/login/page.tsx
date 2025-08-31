@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import { supabase } from "../../../lib/supabaseClient";
+import { useI18n } from "@/context/I18nContext";
 
 export default function Login() {
+
+    const { t } = useI18n();
+
     const handleGoogleLogin = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
@@ -16,7 +20,7 @@ export default function Login() {
         });
 
         if (error) {
-            alert("Google ile girişte hata oluştu: " + error.message);
+            alert("Error occured when signing in with Google: " + error.message);
         }
     };
 
@@ -24,7 +28,7 @@ export default function Login() {
         <div className="flex flex-col items-center min-h-screen">
             <div className="p-6 bg-white/15 backdrop-blur-lg rounded-lg space-y-8">
                 <h1 className="text-xl">
-                    Hi! Right now you can only login with Google.
+                    {t('loginMessage')}
                 </h1>
                 <button
                     onClick={handleGoogleLogin}
@@ -37,7 +41,7 @@ export default function Login() {
                         height={32}
                         className="mr-3 rounded-lg"
                     />
-                    <span className="text-white text-lg">Sign in with Google</span>
+                    <span className="text-white text-lg">{t('signInWithGoogle')}</span>
                 </button>
             </div>
         </div>

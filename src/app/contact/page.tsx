@@ -24,10 +24,10 @@ function Contact() {
         });
 
         if (res.ok) {
-            alert("Mesajın gönderildi!");
+            alert("Your message is sent!");
             setForm({ name: "", lastName: "", email: "", message: "" });
         } else {
-            alert("Bir hata oluştu.");
+            alert("Error!");
         }
     };
 
