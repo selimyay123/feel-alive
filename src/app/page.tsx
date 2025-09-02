@@ -1,28 +1,52 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { tasks } from "./data/tasks";
 import { ClipLoader } from "react-spinners";
 import { useI18n } from "@/context/I18nContext";
 import { supabase } from "../../lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
+import { taskKeys } from "./data/tasks";
+
+// İKİ SÖZLÜĞÜ İÇERİ AL: Metin → key eşleşmesi kurmak için
+import en from "@/locales/en.json";
+import tr from "@/locales/tr.json";
 
 type UserTaskRow = {
-  task: string;
+  task: string;        // "tasks.tX" veya eski düz metin
   created_at: string;
 };
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const [task, setTask] = useState<string | null>(null);
+  const [task, setTask] = useState<string | null>(null); // DB'deki ham değer (key ya da eski düz metin)
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [user, setUser] = useState<User | null>(null);
 
   const { t } = useI18n();
   const router = useRouter();
+
+  // --- Reverse map: "metin" -> "tasks.tX"
+  // Hem EN hem TR sözlükteki "tasks" içeriğini tarayıp tek bir ters sözlük çıkarıyoruz.
+  const reverseTaskMap = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+
+    function addDict(dict: any) {
+      const tasksObj = dict?.tasks ?? {};
+      Object.entries(tasksObj).forEach(([k, v]) => {
+        if (typeof v === "string") {
+          map[v] = `tasks.${k}`; // örn: "En az 10 dk..." -> "tasks.t1"
+        }
+      });
+    }
+
+    addDict(en);
+    addDict(tr);
+
+    return map;
+  }, []);
 
   function formatTimeLeft(ms: number) {
     const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
@@ -32,6 +56,22 @@ export default function Home() {
     return `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  // Ekranda gösterilecek metin: eğer "tasks." ile başlıyorsa çeviri key'idir.
+  function renderTaskText(raw: string | null): string {
+    if (!raw) return "";
+    if (raw.startsWith("tasks.")) {
+      return t(raw); // örn: t("tasks.t1")
+    }
+    // Eski düz metin gelirse (normalize edilmeden önce), olduğu gibi göster
+    return raw;
+  }
+
+  // Düz metin -> key normalizasyonu (eşleşme bulunursa key'i döndürür)
+  function normalizeToKey(raw: string): string | null {
+    if (raw.startsWith("tasks.")) return raw;
+    return reverseTaskMap[raw] ?? null;
   }
 
   useEffect(() => {
@@ -69,7 +109,22 @@ export default function Home() {
           .single<UserTaskRow>();
 
         if (existingTask) {
-          setTask(existingTask.task);
+          let raw = existingTask.task;
+
+          // Eğer düz metinse, mümkünse key'e çevir ve İSTEĞE BAĞLI migrate et
+          const normalized = normalizeToKey(raw);
+          if (normalized && normalized !== raw) {
+            raw = normalized;
+            // --- Opsiyonel: DB'yi de anahtara migrate et (yorumdan çıkarırsan kalıcı olur)
+            await supabase
+              .from("user_tasks")
+              .update({ task: raw })
+              .eq("user_id", data.session.user.id)
+              .eq("assigned_date", today);
+          }
+
+          setTask(raw);
+
           const expiry = new Date(existingTask.created_at);
           expiry.setHours(expiry.getHours() + 24);
           setExpiresAt(expiry);
@@ -80,21 +135,7 @@ export default function Home() {
     };
 
     fetchUserAndTask();
-  }, []);
-
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        setTask(null);
-        setExpiresAt(null);
-        setTimeLeft("");
-        setUser(null);
-      }
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleClick() {
@@ -121,7 +162,20 @@ export default function Home() {
       }
 
       if (existingTask) {
-        setTask(existingTask.task);
+        let raw = existingTask.task;
+
+        const normalized = normalizeToKey(raw);
+        if (normalized && normalized !== raw) {
+          raw = normalized;
+          // Opsiyonel migrate:
+          await supabase
+            .from("user_tasks")
+            .update({ task: raw })
+            .eq("user_id", user.id)
+            .eq("assigned_date", today);
+        }
+
+        setTask(raw);
         const expiry = new Date(existingTask.created_at);
         expiry.setHours(expiry.getHours() + 24);
         setExpiresAt(expiry);
@@ -129,24 +183,25 @@ export default function Home() {
         return;
       }
 
-      // Pick a new random task
-      const newTask = tasks[Math.floor(Math.random() * tasks.length)].task;
+      // Yeni bir rastgele görev KEY'i seç
+      const idx = Math.floor(Math.random() * taskKeys.length);
+      const newTaskKey = `tasks.${taskKeys[idx]}`; // "tasks.tX"
 
       const { data: inserted, error: insertError } = await supabase
         .from("user_tasks")
         .insert([
           {
             user_id: user.id,
-            task: newTask,
-            assigned_date: today,
-          },
+            task: newTaskKey, // KEY'i kaydediyoruz
+            assigned_date: today
+          }
         ])
         .select("created_at")
         .single<{ created_at: string }>();
 
       if (insertError) throw insertError;
 
-      setTask(newTask);
+      setTask(newTaskKey);
 
       const expiry = new Date(inserted.created_at);
       expiry.setHours(expiry.getHours() + 24);
@@ -205,27 +260,25 @@ export default function Home() {
                   : "border-0 bg-transparent backdrop-blur-0"
               ].join(" ")}
             >
-              {loading ? (
-                <div className="flex justify-center items-center w-full">
-                  <ClipLoader color="#8e44ad" size={50} />
-                </div>
-              ) : !task ? (
+              {!task ? (
                 <button
                   className="rounded-full w-[60%] max-md:w-full mx-auto py-3 px-4 hover-gradient"
                   onClick={handleClick}
+                  disabled={loading}
                 >
-                  {t("start")}
+                  {loading ? <ClipLoader color="#8e44ad" size={20} /> : t("start")}
                 </button>
               ) : (
                 <p className="text-white text-xl italic">
-                  &quot;{task}&quot;
+                  &quot;{renderTaskText(task)}&quot;
                 </p>
               )}
             </div>
 
             {task && timeLeft && (
               <p className="mt-3 text-center text-sm text-gray-200">
-                New task available in <span className="font-bold">{timeLeft}</span>
+                {t("ui.newTaskIn")}{" "}
+                <span className="font-bold">{timeLeft}</span>
               </p>
             )}
           </div>

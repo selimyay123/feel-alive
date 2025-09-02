@@ -13,7 +13,6 @@ function Navbar() {
     const pathname = usePathname();
     const { t, setLocale } = useI18n();
 
-    // Kullanıcı: undefined = yükleniyor, null = çıkış yapılmış, obje = giriş yapılmış
     const [user, setUser] = useState<
         { email: string; full_name?: string; avatar_url?: string } | null | undefined
     >(undefined);
@@ -98,6 +97,7 @@ function Navbar() {
                 <div className="flex items-center gap-4 w-full justify-end pr-8">
                     <span className="fi fi-tr cursor-pointer" onClick={() => setLocale("tr")}></span>
                     <span className="fi fi-us cursor-pointer" onClick={() => setLocale("en")}></span>
+                    <span className="fi fi-jp cursor-pointer" onClick={() => setLocale('jp')}></span>
                 </div>
                 <div className="w-full flex items-center justify-between max-md:justify-center max-md:gap-4">
                     <Link href="/" className="italic text-xl">

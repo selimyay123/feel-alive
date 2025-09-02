@@ -1,46 +1,91 @@
 'use client';
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+
+import React, {
+    createContext,
+    useState,
+    useContext,
+    ReactNode,
+    useEffect,
+    useMemo,
+} from 'react';
 import en from '@/locales/en.json';
 import tr from '@/locales/tr.json';
+import jp from '@/locales/jp.json';
 
-type Locale = 'en' | 'tr';
-type Messages = typeof en;
+type Locale = 'en' | 'tr' | 'jp';
 
-const translations: Record<Locale, Messages> = { en, tr };
+// Sözlükleri generic/loosely typed tutuyoruz ki dot-notation ile derin erişim yapabilelim
+type Messages = Record<string, unknown>;
+
+const translations: Record<Locale, Messages> = { en, tr, jp };
 
 interface I18nContextProps {
     locale: Locale;
-    t: (key: keyof Messages, vars?: Record<string, string>) => string;
+    // ÖNEMLİ: key artık string; "a.b.c" yollarını destekler
+    t: (key: string, vars?: Record<string, string | number>) => string;
     setLocale: (locale: Locale) => void;
 }
 
 const I18nContext = createContext<I18nContextProps | undefined>(undefined);
+
+// Dot-notation ile derin okuma yardımcıları
+function getPath(obj: unknown, path: string): unknown {
+    return path.split('.').reduce<unknown>((acc, segment) => {
+        if (acc == null || typeof acc !== 'object') return undefined;
+        // @ts-expect-error: loose index access by design
+        return acc[segment];
+    }, obj);
+}
+
+function coerceToString(val: unknown, fallback: string): string {
+    if (val == null) return fallback;
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    // Array/Obj gelirse (yanlış yapılandırma) anahtarı döndürerek debug kolaylığı sağlıyoruz
+    return fallback;
+}
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
     const [locale, setLocale] = useState<Locale>('en');
 
     // İlk açılışta localStorage'dan oku
     useEffect(() => {
-        const savedLocale = localStorage.getItem('locale') as Locale;
-        if (savedLocale) {
-            setLocale(savedLocale);
+        try {
+            const saved = localStorage.getItem('locale') as Locale | null;
+            if (saved === 'en' || saved === 'tr') {
+                setLocale(saved);
+            }
+        } catch {
+            // SSR veya private mode durumlarında sessizce geç
         }
     }, []);
 
     // Dil değiştiğinde localStorage'a kaydet
     useEffect(() => {
-        localStorage.setItem('locale', locale);
+        try {
+            localStorage.setItem('locale', locale);
+        } catch {
+            // sessiz geç
+        }
     }, [locale]);
 
-    const t = (key: keyof Messages, vars?: Record<string, string>) => {
-        let text = translations[locale][key] || key;
-        if (vars) {
-            Object.entries(vars).forEach(([k, v]) => {
-                text = text.replace(`{${k}}`, v);
-            });
-        }
-        return text;
-    };
+    const t = useMemo<I18nContextProps['t']>(() => {
+        return (key, vars) => {
+            const dict = translations[locale] ?? translations.en;
+            const raw = getPath(dict, key);
+            let text = coerceToString(raw, key);
+
+            if (vars) {
+                // {name} gibi placeholder'ları çoklu tekrarlar için global replace ile değiştir
+                Object.entries(vars).forEach(([k, v]) => {
+                    const re = new RegExp(`\\{${k}\\}`, 'g');
+                    text = text.replace(re, String(v));
+                });
+            }
+
+            return text;
+        };
+    }, [locale]);
 
     return (
         <I18nContext.Provider value={{ locale, t, setLocale }}>
