@@ -33,7 +33,7 @@ export default function Home() {
   const reverseTaskMap = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
 
-    function addDict(dict: any) {
+    function addDict(dict: { start?: string; slogan?: string; subSlogan1?: string; subSlogan2?: string; ourVision?: string; areYouTired?: string; wakeUp?: string; thatIsWhy?: string; doNotWorry?: string; youAreNotARobot?: string; youAreAlive?: string; name?: string; lastName?: string; email?: string; enterYourMessageHere?: string; send?: string; loginMessage?: string; signInWithGoogle?: string; login?: string; ui?: { newTaskIn: string; } | { newTaskIn: string; }; tasks: any; }) {
       const tasksObj = dict?.tasks ?? {};
       Object.entries(tasksObj).forEach(([k, v]) => {
         if (typeof v === "string") {
