@@ -7,18 +7,30 @@ import { ClipLoader } from "react-spinners";
 import { useI18n } from "@/context/I18nContext";
 import { supabase } from "../../lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
-import { taskKeys } from "./data/tasks";
+import { getRandomTaskKey } from "./data/tasks";
 
 import en from "@/locales/en.json";
 import tr from "@/locales/tr.json";
 
 type UserTaskRow = {
-  task: string;        // "tasks.tX" veya eski düz metin
+  task: string;        // "tasks.tX" veya legacy düz metin
   created_at: string;
 };
 
 type TasksDict = Record<string, string>;
 type MinimalLocale = { tasks?: TasksDict };
+
+// --- Metin normalize: düz metinlerdeki küçük farkları (tırnak, boşluk vb.) eşitle
+function normalizeText(s: string) {
+  return s
+    .trim()
+    .replace(/[“”«»„‟]/g, '"')
+    .replace(/[‘’‚‛]/g, "'")
+    .replace(/\u2026/g, "...")
+    .replace(/\s+/g, " ")
+    .replace(/[ \t]+([,.;:!?])/g, "$1")
+    .toLowerCase();
+}
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -30,7 +42,7 @@ export default function Home() {
   const { t } = useI18n();
   const router = useRouter();
 
-  // --- Reverse map: "metin" -> "tasks.tX"
+  // "metin" -> "tasks.tX" reverse map (EN+TR) — normalize ederek kur
   const reverseTaskMap = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
 
@@ -38,7 +50,7 @@ export default function Home() {
       const tasksObj: TasksDict = dict?.tasks ?? {};
       for (const [k, v] of Object.entries(tasksObj)) {
         if (typeof v === "string") {
-          map[v] = `tasks.${k}`;
+          map[normalizeText(v)] = `tasks.${k}`;
         }
       }
     }
@@ -59,17 +71,29 @@ export default function Home() {
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  function renderTaskText(raw: string | null): string {
-    if (!raw) return "";
-    if (raw.startsWith("tasks.")) {
-      return t(raw);
-    }
-    return raw;
-  }
-
   function normalizeToKey(raw: string): string | null {
     if (raw.startsWith("tasks.")) return raw;
-    return reverseTaskMap[raw] ?? null;
+    return reverseTaskMap[normalizeText(raw)] ?? null;
+  }
+
+  function renderTaskText(raw: string | null): string {
+    if (!raw) return "";
+
+    // 1) Zaten key ise çevir
+    if (raw.startsWith("tasks.")) {
+      const txt = t(raw);
+      return txt === raw ? `⛔ ${raw}` : txt; // dev'de eksik çeviriyi göster
+    }
+
+    // 2) Düz metinse: anlık key'e çevirip çevir
+    const maybeKey = normalizeToKey(raw);
+    if (maybeKey) {
+      const txt = t(maybeKey);
+      return txt === maybeKey ? `⛔ ${maybeKey}` : txt;
+    }
+
+    // 3) Hâlâ eşleşmediyse: işaretleyip aynen göster (geçici)
+    return `⚠︎ ${raw}`;
   }
 
   useEffect(() => {
@@ -108,6 +132,7 @@ export default function Home() {
         if (existingTask) {
           let raw = existingTask.task;
 
+          // Legacy düz metin geldiyse anında key'e çevir ve DB'yi güncelle
           const normalized = normalizeToKey(raw);
           if (normalized && normalized !== raw) {
             raw = normalized;
@@ -150,6 +175,7 @@ export default function Home() {
         .eq("assigned_date", today)
         .single<UserTaskRow>();
 
+      // PGRST116: no rows — yoksa yeni oluşturacağız
       if (fetchError && (fetchError as { code?: string }).code !== "PGRST116") {
         throw fetchError;
       }
@@ -175,8 +201,8 @@ export default function Home() {
         return;
       }
 
-      const idx = Math.floor(Math.random() * taskKeys.length);
-      const newTaskKey = `tasks.${taskKeys[idx]}`;
+      // Yeni görev: her zaman KEY yaz
+      const newTaskKey = getRandomTaskKey();
 
       const { data: inserted, error: insertError } = await supabase
         .from("user_tasks")
@@ -201,14 +227,10 @@ export default function Home() {
       setLoading(false);
     } catch (e: unknown) {
       let msg = "Unknown error";
-      if (e instanceof Error) {
-        msg = e.message;
-      } else if (typeof e === "string") {
-        msg = e;
-      } else {
-        try {
-          msg = JSON.stringify(e);
-        } catch { }
+      if (e instanceof Error) msg = e.message;
+      else if (typeof e === "string") msg = e;
+      else {
+        try { msg = JSON.stringify(e); } catch { }
       }
       console.error("Task assignment error:", msg);
       setLoading(false);

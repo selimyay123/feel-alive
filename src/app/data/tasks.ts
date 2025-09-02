@@ -1,6 +1,5 @@
 // data/tasks.ts
-// Artık görev metni değil, görev ANAHTARLARI tutuluyor.
-// DB'ye "tasks.tX" formatında key yazacağız.
+// DB'de sadece KEY tutuyoruz ("tasks.tX"). Metinler locales/*.json'dan geliyor.
 
 export const taskKeys = [
     "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10",
@@ -12,9 +11,11 @@ export const taskKeys = [
     "t61", "t62", "t63", "t64", "t65", "t66", "t67", "t68", "t69", "t70",
     "t71", "t72", "t73", "t74", "t75", "t76", "t77", "t78", "t79", "t80",
     "t81"
-];
+] as const;
 
-export function getRandomTaskKey() {
-    const idx = Math.floor(Math.random() * taskKeys.length);
-    return `tasks.${taskKeys[idx]}`;
+export type TaskKey = `tasks.${typeof taskKeys[number]}`;
+
+export function getRandomTaskKey(): TaskKey {
+    const i = Math.floor(Math.random() * taskKeys.length);
+    return `tasks.${taskKeys[i]}`;
 }

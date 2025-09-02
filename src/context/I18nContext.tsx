@@ -10,18 +10,19 @@ import React, {
 } from 'react';
 import en from '@/locales/en.json';
 import tr from '@/locales/tr.json';
-import jp from '@/locales/jp.json';
 
-type Locale = 'en' | 'tr' | 'jp';
+type Locale = 'en' | 'tr';
 
-// Sözlükleri generic/loosely typed tutuyoruz ki dot-notation ile derin erişim yapabilelim
+// Sözlükleri generic tutuyoruz ki dot-notation ile derin erişim mümkün olsun
 type Messages = Record<string, unknown>;
+const translations: Record<Locale, Messages> = { en, tr };
 
-const translations: Record<Locale, Messages> = { en, tr, jp };
+// Fallback dil
+const FALLBACK_LOCALE: Locale = 'en';
 
 interface I18nContextProps {
     locale: Locale;
-    // ÖNEMLİ: key artık string; "a.b.c" yollarını destekler
+    // ÖNEMLİ: key string; "a.b.c" yollarını destekler
     t: (key: string, vars?: Record<string, string | number>) => string;
     setLocale: (locale: Locale) => void;
 }
@@ -41,7 +42,7 @@ function coerceToString(val: unknown, fallback: string): string {
     if (val == null) return fallback;
     if (typeof val === 'string') return val;
     if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-    // Array/Obj gelirse (yanlış yapılandırma) anahtarı döndürerek debug kolaylığı sağlıyoruz
+    // Yanlış yapılandırmada (array/obj) debug kolaylığı için fallback (key) döndür
     return fallback;
 }
 
@@ -52,18 +53,23 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         try {
             const saved = localStorage.getItem('locale') as Locale | null;
-            if (saved === 'en' || saved === 'tr') {
-                setLocale(saved);
-            }
+            if (saved === 'en' || saved === 'tr') setLocale(saved);
         } catch {
-            // SSR veya private mode durumlarında sessizce geç
+            // SSR/private mode vb.
         }
     }, []);
 
-    // Dil değiştiğinde localStorage'a kaydet
+    // Dil değişince localStorage'a ve <html lang> özniteliğine yaz
     useEffect(() => {
         try {
             localStorage.setItem('locale', locale);
+        } catch {
+            // sessiz geç
+        }
+        try {
+            if (typeof document !== 'undefined') {
+                document.documentElement.setAttribute('lang', locale);
+            }
         } catch {
             // sessiz geç
         }
@@ -71,12 +77,28 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
 
     const t = useMemo<I18nContextProps['t']>(() => {
         return (key, vars) => {
-            const dict = translations[locale] ?? translations.en;
-            const raw = getPath(dict, key);
+            const primaryDict = translations[locale] ?? translations[FALLBACK_LOCALE];
+            const fallbackDict =
+                locale === FALLBACK_LOCALE ? primaryDict : translations[FALLBACK_LOCALE];
+
+            // 1) Önce seçili dilde ara
+            let raw = getPath(primaryDict, key);
+
+            // 2) Bulunamazsa fallback (EN) dene
+            if (raw == null && fallbackDict) {
+                raw = getPath(fallbackDict, key);
+            }
+
+            // Geliştirme ortamında eksik anahtarları uyar
+            if (raw == null && process.env.NODE_ENV !== 'production') {
+                // eslint-disable-next-line no-console
+                console.warn(`[i18n] Missing key (locale=${locale} → fallback=${FALLBACK_LOCALE}): ${key}`);
+            }
+
             let text = coerceToString(raw, key);
 
             if (vars) {
-                // {name} gibi placeholder'ları çoklu tekrarlar için global replace ile değiştir
+                // {name} gibi placeholder'ları global replace ile değiştir
                 Object.entries(vars).forEach(([k, v]) => {
                     const re = new RegExp(`\\{${k}\\}`, 'g');
                     text = text.replace(re, String(v));
@@ -95,7 +117,7 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useI18n = () => {
-    const context = useContext(I18nContext);
-    if (!context) throw new Error('useI18n must be used within I18nProvider');
-    return context;
+    const ctx = useContext(I18nContext);
+    if (!ctx) throw new Error('useI18n must be used within I18nProvider');
+    return ctx;
 };
