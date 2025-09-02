@@ -9,7 +9,6 @@ import { supabase } from "../../lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
 import { taskKeys } from "./data/tasks";
 
-// İKİ SÖZLÜĞÜ İÇERİ AL: Metin → key eşleşmesi kurmak için
 import en from "@/locales/en.json";
 import tr from "@/locales/tr.json";
 
@@ -18,9 +17,12 @@ type UserTaskRow = {
   created_at: string;
 };
 
+type TasksDict = Record<string, string>;
+type MinimalLocale = { tasks?: TasksDict };
+
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const [task, setTask] = useState<string | null>(null); // DB'deki ham değer (key ya da eski düz metin)
+  const [task, setTask] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
   const [user, setUser] = useState<User | null>(null);
@@ -29,21 +31,20 @@ export default function Home() {
   const router = useRouter();
 
   // --- Reverse map: "metin" -> "tasks.tX"
-  // Hem EN hem TR sözlükteki "tasks" içeriğini tarayıp tek bir ters sözlük çıkarıyoruz.
   const reverseTaskMap = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
 
-    function addDict(dict: { start?: string; slogan?: string; subSlogan1?: string; subSlogan2?: string; ourVision?: string; areYouTired?: string; wakeUp?: string; thatIsWhy?: string; doNotWorry?: string; youAreNotARobot?: string; youAreAlive?: string; name?: string; lastName?: string; email?: string; enterYourMessageHere?: string; send?: string; loginMessage?: string; signInWithGoogle?: string; login?: string; ui?: { newTaskIn: string; } | { newTaskIn: string; }; tasks: any; }) {
-      const tasksObj = dict?.tasks ?? {};
-      Object.entries(tasksObj).forEach(([k, v]) => {
+    function addDict(dict: MinimalLocale) {
+      const tasksObj: TasksDict = dict?.tasks ?? {};
+      for (const [k, v] of Object.entries(tasksObj)) {
         if (typeof v === "string") {
-          map[v] = `tasks.${k}`; // örn: "En az 10 dk..." -> "tasks.t1"
+          map[v] = `tasks.${k}`;
         }
-      });
+      }
     }
 
-    addDict(en);
-    addDict(tr);
+    addDict(en as MinimalLocale);
+    addDict(tr as MinimalLocale);
 
     return map;
   }, []);
@@ -58,17 +59,14 @@ export default function Home() {
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
-  // Ekranda gösterilecek metin: eğer "tasks." ile başlıyorsa çeviri key'idir.
   function renderTaskText(raw: string | null): string {
     if (!raw) return "";
     if (raw.startsWith("tasks.")) {
-      return t(raw); // örn: t("tasks.t1")
+      return t(raw);
     }
-    // Eski düz metin gelirse (normalize edilmeden önce), olduğu gibi göster
     return raw;
   }
 
-  // Düz metin -> key normalizasyonu (eşleşme bulunursa key'i döndürür)
   function normalizeToKey(raw: string): string | null {
     if (raw.startsWith("tasks.")) return raw;
     return reverseTaskMap[raw] ?? null;
@@ -92,7 +90,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  // On mount: fetch session and today's task
   useEffect(() => {
     const fetchUserAndTask = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -111,11 +108,9 @@ export default function Home() {
         if (existingTask) {
           let raw = existingTask.task;
 
-          // Eğer düz metinse, mümkünse key'e çevir ve İSTEĞE BAĞLI migrate et
           const normalized = normalizeToKey(raw);
           if (normalized && normalized !== raw) {
             raw = normalized;
-            // --- Opsiyonel: DB'yi de anahtara migrate et (yorumdan çıkarırsan kalıcı olur)
             await supabase
               .from("user_tasks")
               .update({ task: raw })
@@ -135,7 +130,6 @@ export default function Home() {
     };
 
     fetchUserAndTask();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleClick() {
@@ -156,7 +150,6 @@ export default function Home() {
         .eq("assigned_date", today)
         .single<UserTaskRow>();
 
-      // PGRST116 = no rows
       if (fetchError && (fetchError as { code?: string }).code !== "PGRST116") {
         throw fetchError;
       }
@@ -167,7 +160,6 @@ export default function Home() {
         const normalized = normalizeToKey(raw);
         if (normalized && normalized !== raw) {
           raw = normalized;
-          // Opsiyonel migrate:
           await supabase
             .from("user_tasks")
             .update({ task: raw })
@@ -183,16 +175,15 @@ export default function Home() {
         return;
       }
 
-      // Yeni bir rastgele görev KEY'i seç
       const idx = Math.floor(Math.random() * taskKeys.length);
-      const newTaskKey = `tasks.${taskKeys[idx]}`; // "tasks.tX"
+      const newTaskKey = `tasks.${taskKeys[idx]}`;
 
       const { data: inserted, error: insertError } = await supabase
         .from("user_tasks")
         .insert([
           {
             user_id: user.id,
-            task: newTaskKey, // KEY'i kaydediyoruz
+            task: newTaskKey,
             assigned_date: today
           }
         ])
@@ -240,7 +231,6 @@ export default function Home() {
         />
 
         <div className="absolute inset-0 flex flex-col items-center justify-center w-[70%] max-md:w-full mx-auto px-4">
-          {/* Slogans */}
           <div className="flex max-md:flex-col items-center justify-evenly gap-6 md:gap-0">
             <h1 className="text-white text-2xl text-center px-4 underline">
               {t("subSlogan1")}
